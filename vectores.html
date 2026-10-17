@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Introducción a los Vectores</title>
+<style>
+  :root {
+    --bg: #f7f7f5;
+    --surface: #ffffff;
+    --text: #1f2328;
+    --muted: #5f6670;
+    --border: #dcdfe3;
+    --accent: #2563eb;
+    --a: #2563eb;
+    --b: #dc2626;
+    --sum: #059669;
+    --code-bg: #f0f2f5;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #15171a;
+      --surface: #1e2125;
+      --text: #e6e8eb;
+      --muted: #9aa2ac;
+      --border: #33383e;
+      --accent: #60a5fa;
+      --a: #60a5fa;
+      --b: #f87171;
+      --sum: #34d399;
+      --code-bg: #262a2f;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.65;
+  }
+  main { max-width: 820px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { font-size: 2.2rem; margin: 0 0 4px; }
+  .lead { color: var(--muted); font-size: 1.1rem; margin-top: 0; }
+  h2 { margin-top: 48px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+  nav { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 20px; margin: 24px 0; }
+  nav ol { margin: 6px 0; padding-left: 20px; }
+  nav a { color: var(--accent); text-decoration: none; }
+  nav a:hover { text-decoration: underline; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; margin: 16px 0; }
+  .formula {
+    background: var(--code-bg); border-radius: 8px; padding: 12px 16px; margin: 12px 0;
+    font-family: "Cambria Math", "Times New Roman", serif; font-size: 1.15rem; text-align: center; overflow-x: auto;
+  }
+  .note { border-left: 4px solid var(--accent); padding: 8px 16px; background: var(--surface); border-radius: 0 8px 8px 0; }
+  code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+  th, td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; }
+  th { background: var(--code-bg); }
+  .va { color: var(--a); font-weight: 600; }
+  .vb { color: var(--b); font-weight: 600; }
+  .vs { color: var(--sum); font-weight: 600; }
+  .demo { display: grid; grid-template-columns: 1fr; gap: 16px; }
+  @media (min-width: 720px) { .demo { grid-template-columns: 1fr 240px; } }
+  svg.plane { width: 100%; height: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; touch-action: none; }
+  .readout { font-family: ui-monospace, Consolas, monospace; font-size: 0.9rem; }
+  .readout div { margin: 4px 0; }
+  .hint { color: var(--muted); font-size: 0.9rem; }
+  details { margin: 10px 0; }
+  summary { cursor: pointer; color: var(--accent); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Vectores</h1>
+  <p class="lead">Una explicación desde cero: qué son, cómo se representan y cómo se opera con ellos.</p>
+
+  <nav>
+    <strong>Contenido</strong>
+    <ol>
+      <li><a href="#que-es">¿Qué es un vector?</a></li>
+      <li><a href="#componentes">Componentes y notación</a></li>
+      <li><a href="#magnitud">Magnitud y dirección</a></li>
+      <li><a href="#suma">Suma y resta</a></li>
+      <li><a href="#escalar">Multiplicación por un escalar</a></li>
+      <li><a href="#unitario">Vector unitario</a></li>
+      <li><a href="#punto">Producto punto</a></li>
+      <li><a href="#cruz">Producto cruz</a></li>
+      <li><a href="#interactivo">Laboratorio interactivo</a></li>
+      <li><a href="#ejercicios">Ejercicios</a></li>
+    </ol>
+  </nav>
+
+  <h2 id="que-es">1. ¿Qué es un vector?</h2>
+  <p>Un <strong>vector</strong> es una cantidad que tiene <strong>magnitud</strong> (tamaño) y <strong>dirección</strong>. Se dibuja como una flecha: la longitud indica la magnitud y la punta indica hacia dónde apunta.</p>
+  <p>Esto lo distingue de un <strong>escalar</strong>, que solo tiene magnitud.</p>
+  <table>
+    <tr><th>Escalares (solo magnitud)</th><th>Vectores (magnitud + dirección)</th></tr>
+    <tr><td>Temperatura: 25 °C</td><td>Velocidad: 60 km/h hacia el norte</td></tr>
+    <tr><td>Masa: 3 kg</td><td>Fuerza: 10 N hacia abajo</td></tr>
+    <tr><td>Tiempo: 5 s</td><td>Desplazamiento: 2 m a la derecha</td></tr>
+  </table>
+  <p class="note">Un vector no depende de dónde se dibuje: dos flechas con la misma longitud y la misma dirección representan <em>el mismo vector</em>, aunque estén en lugares distintos.</p>
+
+  <h2 id="componentes">2. Componentes y notación</h2>
+  <p>En un plano cartesiano, un vector se describe por cuánto avanza en cada eje. Esos números son sus <strong>componentes</strong>.</p>
+  <div class="formula">v = (v<sub>x</sub>, v<sub>y</sub>) &nbsp;&nbsp; en 2D &nbsp;&nbsp;&nbsp;&nbsp; v = (v<sub>x</sub>, v<sub>y</sub>, v<sub>z</sub>) &nbsp;&nbsp; en 3D</div>
+  <p>Por ejemplo, <span class="va">a = (3, 2)</span> significa "3 unidades a la derecha y 2 hacia arriba".</p>
+  <p>También se escribe con los vectores base <strong>î</strong> = (1, 0) y <strong>ĵ</strong> = (0, 1):</p>
+  <div class="formula">a = 3î + 2ĵ</div>
+  <p>Si un vector va del punto P(x<sub>1</sub>, y<sub>1</sub>) al punto Q(x<sub>2</sub>, y<sub>2</sub>), sus componentes son:</p>
+  <div class="formula">PQ = (x<sub>2</sub> − x<sub>1</sub>, &nbsp;y<sub>2</sub> − y<sub>1</sub>)</div>
+
+  <h2 id="magnitud">3. Magnitud y dirección</h2>
+  <p>La <strong>magnitud</strong> (o módulo) es la longitud de la flecha. Sale directamente del teorema de Pitágoras:</p>
+  <div class="formula">|v| = √(v<sub>x</sub>² + v<sub>y</sub>²)</div>
+  <p>La <strong>dirección</strong> se suele dar como el ángulo θ respecto al eje x positivo:</p>
+  <div class="formula">θ = atan2(v<sub>y</sub>, v<sub>x</sub>)</div>
+  <div class="card">
+    <strong>Ejemplo:</strong> para <span class="va">a = (3, 4)</span><br>
+    |a| = √(9 + 16) = √25 = <strong>5</strong><br>
+    θ = atan2(4, 3) ≈ <strong>53.13°</strong>
+  </div>
+  <p>A la inversa, si conoces magnitud y ángulo, obtienes las componentes así:</p>
+  <div class="formula">v<sub>x</sub> = |v|·cos θ &nbsp;&nbsp;&nbsp; v<sub>y</sub> = |v|·sen θ</div>
+
+  <h2 id="suma">4. Suma y resta</h2>
+  <p>Para sumar vectores se suman sus componentes, una a una:</p>
+  <div class="formula"><span class="va">a</span> + <span class="vb">b</span> = (a<sub>x</sub> + b<sub>x</sub>, &nbsp;a<sub>y</sub> + b<sub>y</sub>)</div>
+  <p><strong>Geométricamente</strong> (regla del triángulo): coloca la cola de <span class="vb">b</span> en la punta de <span class="va">a</span>. El vector <span class="vs">suma</span> va desde la cola de <span class="va">a</span> hasta la punta de <span class="vb">b</span>.</p>
+  <div class="card">
+    <strong>Ejemplo:</strong> (3, 1) + (1, 2) = <strong>(4, 3)</strong>
+  </div>
+  <p>La <strong>resta</strong> es sumar el opuesto: a − b = a + (−b). El vector a − b va desde la punta de b hasta la punta de a.</p>
+  <div class="formula">a − b = (a<sub>x</sub> − b<sub>x</sub>, &nbsp;a<sub>y</sub> − b<sub>y</sub>)</div>
+  <p>Propiedades: la suma es <strong>conmutativa</strong> (a + b = b + a) y <strong>asociativa</strong> ((a + b) + c = a + (b + c)).</p>
+
+  <h2 id="escalar">5. Multiplicación por un escalar</h2>
+  <p>Multiplicar un vector por un número k lo <strong>estira o encoge</strong>:</p>
+  <div class="formula">k · v = (k·v<sub>x</sub>, &nbsp;k·v<sub>y</sub>)</div>
+  <ul>
+    <li>Si k &gt; 1, el vector se alarga.</li>
+    <li>Si 0 &lt; k &lt; 1, se acorta.</li>
+    <li>Si k &lt; 0, además <strong>invierte su sentido</strong>.</li>
+    <li>Si k = 0, se obtiene el vector nulo (0, 0).</li>
+  </ul>
+  <div class="card"><strong>Ejemplo:</strong> 2 · (1, 3) = (2, 6) &nbsp;&nbsp;·&nbsp;&nbsp; −1 · (1, 3) = (−1, −3)</div>
+
+  <h2 id="unitario">6. Vector unitario</h2>
+  <p>Un vector <strong>unitario</strong> tiene magnitud 1 y solo sirve para indicar dirección. Se obtiene dividiendo un vector entre su magnitud (esto se llama <em>normalizar</em>):</p>
+  <div class="formula">û = v / |v|</div>
+  <div class="card"><strong>Ejemplo:</strong> v = (3, 4), |v| = 5 → û = (0.6, 0.8). Comprueba: √(0.36 + 0.64) = 1 ✓</div>
+
+  <h2 id="punto">7. Producto punto (producto escalar)</h2>
+  <p>El producto punto toma dos vectores y devuelve un <strong>número</strong>:</p>
+  <div class="formula">a · b = a<sub>x</sub>b<sub>x</sub> + a<sub>y</sub>b<sub>y</sub> &nbsp;&nbsp; = &nbsp;&nbsp; |a| |b| cos θ</div>
+  <p>donde θ es el ángulo entre ellos. Esto permite calcular ángulos:</p>
+  <div class="formula">cos θ = (a · b) / (|a| |b|)</div>
+  <p>Interpretación del signo:</p>
+  <ul>
+    <li><strong>a · b &gt; 0</strong>: apuntan en direcciones parecidas (θ &lt; 90°).</li>
+    <li><strong>a · b = 0</strong>: son <strong>perpendiculares</strong> (θ = 90°).</li>
+    <li><strong>a · b &lt; 0</strong>: apuntan en direcciones opuestas (θ &gt; 90°).</li>
+  </ul>
+  <div class="card"><strong>Ejemplo:</strong> (1, 2) · (4, −2) = 4 − 4 = 0 → son perpendiculares.</div>
+  <p>Uso típico en física: el trabajo es W = F · d (fuerza por desplazamiento).</p>
+
+  <h2 id="cruz">8. Producto cruz (producto vectorial)</h2>
+  <p>Solo está definido en <strong>3D</strong> y devuelve un <strong>vector</strong> perpendicular a ambos:</p>
+  <div class="formula">a × b = (a<sub>y</sub>b<sub>z</sub> − a<sub>z</sub>b<sub>y</sub>, &nbsp; a<sub>z</sub>b<sub>x</sub> − a<sub>x</sub>b<sub>z</sub>, &nbsp; a<sub>x</sub>b<sub>y</sub> − a<sub>y</sub>b<sub>x</sub>)</div>
+  <div class="formula">|a × b| = |a| |b| sen θ</div>
+  <ul>
+    <li>Su magnitud es el <strong>área del paralelogramo</strong> que forman a y b.</li>
+    <li>Su sentido sigue la <strong>regla de la mano derecha</strong>.</li>
+    <li><strong>No</strong> es conmutativo: a × b = −(b × a).</li>
+    <li>Si a y b son paralelos, a × b = 0.</li>
+  </ul>
+  <div class="card"><strong>Ejemplo:</strong> î × ĵ = (1,0,0) × (0,1,0) = (0, 0, 1) = k̂</div>
+
+  <h2 id="interactivo">9. Laboratorio interactivo</h2>
+  <p class="hint">Arrastra las puntas de las flechas <span class="va">a</span> y <span class="vb">b</span>. La flecha <span class="vs">verde</span> es a + b, dibujada con la regla del triángulo.</p>
+  <div class="demo">
+    <svg class="plane" id="plane" viewBox="0 0 440 440" aria-label="Plano cartesiano interactivo"></svg>
+    <div class="card readout" id="readout"></div>
+  </div>
+
+  <h2 id="ejercicios">10. Ejercicios</h2>
+  <ol>
+    <li>Dados a = (2, −1) y b = (−3, 4), calcula a + b y a − b.
+      <details><summary>Ver solución</summary>a + b = (−1, 3) &nbsp;·&nbsp; a − b = (5, −5)</details></li>
+    <li>Calcula la magnitud de v = (−6, 8).
+      <details><summary>Ver solución</summary>|v| = √(36 + 64) = √100 = 10</details></li>
+    <li>Normaliza v = (5, 12).
+      <details><summary>Ver solución</summary>|v| = 13 → û = (5/13, 12/13) ≈ (0.385, 0.923)</details></li>
+    <li>¿Son perpendiculares (3, 6) y (−2, 1)?
+      <details><summary>Ver solución</summary>(3)(−2) + (6)(1) = −6 + 6 = 0 → sí, son perpendiculares.</details></li>
+    <li>Calcula el ángulo entre (1, 0) y (1, 1).
+      <details><summary>Ver solución</summary>cos θ = 1 / (1 · √2) ≈ 0.7071 → θ = 45°</details></li>
+    <li>Calcula (1, 2, 3) × (4, 5, 6).
+      <details><summary>Ver solución</summary>(2·6 − 3·5, 3·4 − 1·6, 1·5 − 2·4) = (−3, 6, −3)</details></li>
+  </ol>
+</main>
+
+<script>
+(function () {
+  const svg = document.getElementById('plane');
+  const out = document.getElementById('readout');
+  const NS = 'http://www.w3.org/2000/svg';
+  const SIZE = 440, UNIT = 40, O = SIZE / 2; // 1 unidad = 40px, origen al centro
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+  const vecs = { a: { x: 3, y: 2 }, b: { x: 1, y: 3 } };
+  let dragging = null;
+
+  const toPx = (x, y) => [O + x * UNIT, O - y * UNIT];
+  const el = (tag, attrs, parent = svg) => {
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    parent.appendChild(e);
+    return e;
+  };
+
+  function arrow(x0, y0, x1, y1, color, dashed) {
+    const [px0, py0] = toPx(x0, y0), [px1, py1] = toPx(x1, y1);
+    const ang = Math.atan2(py1 - py0, px1 - px0), h = 10;
+    const len = Math.hypot(px1 - px0, py1 - py0);
+    if (len < 1) return;
+    el('line', { x1: px0, y1: py0, x2: px1 - Math.cos(ang) * h * 0.8, y2: py1 - Math.sin(ang) * h * 0.8,
+      stroke: color, 'stroke-width': 3, 'stroke-dasharray': dashed ? '6 5' : 'none' });
+    const p = [[px1, py1],
+      [px1 - h * Math.cos(ang - 0.4), py1 - h * Math.sin(ang - 0.4)],
+      [px1 - h * Math.cos(ang + 0.4), py1 - h * Math.sin(ang + 0.4)]];
+    el('polygon', { points: p.map(q => q.join(',')).join(' '), fill: color, opacity: dashed ? 0.6 : 1 });
+  }
+
+  function draw() {
+    svg.innerHTML = '';
+    const grid = css('--border'), muted = css('--muted');
+    for (let i = -5; i <= 5; i++) {
+      const p = O + i * UNIT;
+      el('line', { x1: p, y1: 0, x2: p, y2: SIZE, stroke: grid, 'stroke-width': i === 0 ? 2 : 1 });
+      el('line', { x1: 0, y1: p, x2: SIZE, y2: p, stroke: grid, 'stroke-width': i === 0 ? 2 : 1 });
+      if (i !== 0) {
+        el('text', { x: p, y: O + 14, 'font-size': 10, fill: muted, 'text-anchor': 'middle' }).textContent = i;
+        el('text', { x: O - 8, y: O - i * UNIT + 4, 'font-size': 10, fill: muted, 'text-anchor': 'end' }).textContent = i;
+      }
+    }
+    const { a, b } = vecs, s = { x: a.x + b.x, y: a.y + b.y };
+    const ca = css('--a'), cb = css('--b'), cs = css('--sum');
+
+    arrow(a.x, a.y, s.x, s.y, cb, true);   // b trasladado a la punta de a
+    arrow(0, 0, s.x, s.y, cs);
+    arrow(0, 0, a.x, a.y, ca);
+    arrow(0, 0, b.x, b.y, cb);
+
+    for (const k of ['a', 'b']) {
+      const [px, py] = toPx(vecs[k].x, vecs[k].y);
+      const h = el('circle', { cx: px, cy: py, r: 12, fill: k === 'a' ? ca : cb, opacity: 0.25, style: 'cursor:grab' });
+      h.dataset.k = k;
+      el('text', { x: px + 12, y: py - 10, 'font-size': 15, 'font-weight': 700, fill: k === 'a' ? ca : cb }).textContent = k;
+    }
+    update(a, b, s);
+  }
+
+  function update(a, b, s) {
+    const mag = v => Math.hypot(v.x, v.y);
+    const deg = v => (Math.atan2(v.y, v.x) * 180 / Math.PI);
+    const dot = a.x * b.x + a.y * b.y;
+    const ma = mag(a), mb = mag(b);
+    const ang = ma && mb ? Math.acos(Math.max(-1, Math.min(1, dot / (ma * mb)))) * 180 / Math.PI : NaN;
+    const f = n => (Math.round(n * 100) / 100).toString();
+    out.innerHTML = `
+      <div><span class="va">a</span> = (${f(a.x)}, ${f(a.y)})</div>
+      <div>|a| = ${f(ma)} · θ = ${f(deg(a))}°</div>
+      <div><span class="vb">b</span> = (${f(b.x)}, ${f(b.y)})</div>
+      <div>|b| = ${f(mb)} · θ = ${f(deg(b))}°</div>
+      <hr style="border:none;border-top:1px solid var(--border)">
+      <div><span class="vs">a + b</span> = (${f(s.x)}, ${f(s.y)})</div>
+      <div>|a + b| = ${f(mag(s))}</div>
+      <div>a − b = (${f(a.x - b.x)}, ${f(a.y - b.y)})</div>
+      <div>a · b = ${f(dot)}</div>
+      <div>ángulo entre a y b = ${isNaN(ang) ? '—' : f(ang) + '°'}</div>
+      <div>${dot === 0 && ma && mb ? '<strong>¡Perpendiculares!</strong>' : '&nbsp;'}</div>`;
+  }
+
+  function pointer(e) {
+    const r = svg.getBoundingClientRect();
+    const px = (e.clientX - r.left) * SIZE / r.width, py = (e.clientY - r.top) * SIZE / r.height;
+    const clamp = v => Math.max(-5, Math.min(5, Math.round(v * 2) / 2)); // ajusta a medias unidades
+    return { x: clamp((px - O) / UNIT), y: clamp((O - py) / UNIT) };
+  }
+
+  svg.addEventListener('pointerdown', e => {
+    if (e.target.dataset && e.target.dataset.k) {
+      dragging = e.target.dataset.k;
+      svg.setPointerCapture(e.pointerId);
+    }
+  });
+  svg.addEventListener('pointermove', e => {
+    if (!dragging) return;
+    const p = pointer(e);
+    if (p.x !== vecs[dragging].x || p.y !== vecs[dragging].y) { vecs[dragging] = p; draw(); }
+  });
+  svg.addEventListener('pointerup', () => { dragging = null; });
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', draw);
+
+  draw();
+})();
+</script>
+</body>
+</html>
