@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Modelado de un Robot 3D</title>
+<style>
+  :root {
+    --bg: #f7f7f5;
+    --surface: #ffffff;
+    --text: #1f2328;
+    --muted: #5f6670;
+    --border: #dcdfe3;
+    --accent: #2563eb;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #15171a;
+      --surface: #1e2125;
+      --text: #e6e8eb;
+      --muted: #9aa2ac;
+      --border: #33383e;
+      --accent: #60a5fa;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    display: flex;
+    flex-direction: column;
+  }
+  header {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  header h1 { margin: 0; font-size: 1.25rem; }
+  header p { margin: 4px 0 0; color: var(--muted); font-size: 0.9rem; }
+  main {
+    flex: 1;
+    display: flex;
+    min-height: 0;
+  }
+  #escena {
+    flex: 1;
+    min-width: 0;
+    position: relative;
+  }
+  #escena canvas { display: block; width: 100%; height: 100%; }
+  aside {
+    width: 280px;
+    padding: 16px 20px;
+    border-left: 1px solid var(--border);
+    background: var(--surface);
+    overflow-y: auto;
+  }
+  aside h2 {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    margin: 18px 0 8px;
+  }
+  aside h2:first-child { margin-top: 0; }
+  label {
+    display: block;
+    font-size: 0.9rem;
+    margin: 10px 0 2px;
+  }
+  label span { float: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+  input[type="range"] { width: 100%; accent-color: var(--accent); }
+  .botones { display: flex; flex-wrap: wrap; gap: 8px; }
+  button {
+    flex: 1 1 auto;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg);
+    color: var(--text);
+    font: inherit;
+    font-size: 0.9rem;
+    cursor: pointer;
+  }
+  button.activo { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .colores { display: flex; gap: 8px; }
+  .colores button {
+    flex: 0 0 32px; height: 32px; padding: 0; border-radius: 50%;
+  }
+  .ayuda { font-size: 0.82rem; color: var(--muted); margin-top: 18px; line-height: 1.5; }
+  @media (max-width: 720px) {
+    main { flex-direction: column; }
+    #escena { min-height: 55vh; }
+    aside { width: 100%; border-left: none; border-top: 1px solid var(--border); }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Modelado de un Robot 3D</h1>
+  <p>Robot construido con figuras geométricas básicas usando Three.js</p>
+</header>
+<main>
+  <div id="escena"></div>
+  <aside>
+    <h2>Animaciones</h2>
+    <div class="botones">
+      <button data-anim="ninguna" class="activo">Quieto</button>
+      <button data-anim="caminar">Caminar</button>
+      <button data-anim="saludar">Saludar</button>
+      <button data-anim="bailar">Bailar</button>
+    </div>
+
+    <h2>Articulaciones</h2>
+    <label>Cabeza (giro) <span id="v-cabeza">0°</span></label>
+    <input type="range" id="cabeza" min="-90" max="90" value="0">
+    <label>Brazo izquierdo <span id="v-brazoIzq">0°</span></label>
+    <input type="range" id="brazoIzq" min="-180" max="60" value="0">
+    <label>Brazo derecho <span id="v-brazoDer">0°</span></label>
+    <input type="range" id="brazoDer" min="-180" max="60" value="0">
+    <label>Codos <span id="v-codos">0°</span></label>
+    <input type="range" id="codos" min="0" max="140" value="0">
+    <label>Rotación del cuerpo <span id="v-cuerpo">0°</span></label>
+    <input type="range" id="cuerpo" min="-180" max="180" value="0">
+
+    <h2>Color</h2>
+    <div class="colores">
+      <button data-color="#4a90d9" style="background:#4a90d9" title="Azul"></button>
+      <button data-color="#d9534f" style="background:#d9534f" title="Rojo"></button>
+      <button data-color="#5cb85c" style="background:#5cb85c" title="Verde"></button>
+      <button data-color="#f0ad4e" style="background:#f0ad4e" title="Naranja"></button>
+      <button data-color="#9b9ea3" style="background:#9b9ea3" title="Gris"></button>
+    </div>
+
+    <p class="ayuda">Arrastra para girar la cámara, usa la rueda del ratón para acercar y clic derecho para desplazar.</p>
+  </aside>
+</main>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const contenedor = document.getElementById('escena');
+const oscuro = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+// ---------- Escena, cámara y renderizador ----------
+const escena = new THREE.Scene();
+escena.background = new THREE.Color(oscuro ? 0x15171a : 0xeef0f3);
+escena.fog = new THREE.Fog(escena.background, 12, 30);
+
+const camara = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+camara.position.set(5, 4, 7);
+
+const renderizador = new THREE.WebGLRenderer({ antialias: true });
+renderizador.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderizador.shadowMap.enabled = true;
+renderizador.shadowMap.type = THREE.PCFSoftShadowMap;
+contenedor.appendChild(renderizador.domElement);
+
+const controles = new OrbitControls(camara, renderizador.domElement);
+controles.target.set(0, 2, 0);
+controles.enableDamping = true;
+controles.minDistance = 3;
+controles.maxDistance = 20;
+controles.maxPolarAngle = Math.PI / 2 - 0.05;
+
+// ---------- Luces ----------
+escena.add(new THREE.HemisphereLight(0xffffff, 0x445566, 0.9));
+const sol = new THREE.DirectionalLight(0xffffff, 1.6);
+sol.position.set(5, 10, 6);
+sol.castShadow = true;
+sol.shadow.mapSize.set(2048, 2048);
+sol.shadow.camera.left = -6; sol.shadow.camera.right = 6;
+sol.shadow.camera.top = 6; sol.shadow.camera.bottom = -6;
+escena.add(sol);
+
+// ---------- Suelo ----------
+const suelo = new THREE.Mesh(
+  new THREE.CircleGeometry(15, 64),
+  new THREE.MeshStandardMaterial({ color: oscuro ? 0x23272c : 0xdde1e6 })
+);
+suelo.rotation.x = -Math.PI / 2;
+suelo.receiveShadow = true;
+escena.add(suelo);
+const rejilla = new THREE.GridHelper(30, 30, 0x888888, 0x888888);
+rejilla.material.opacity = 0.15;
+rejilla.material.transparent = true;
+escena.add(rejilla);
+
+// ---------- Materiales ----------
+const matCuerpo = new THREE.MeshStandardMaterial({ color: 0x4a90d9, metalness: 0.4, roughness: 0.35 });
+const matMetal  = new THREE.MeshStandardMaterial({ color: 0x8a9099, metalness: 0.8, roughness: 0.3 });
+const matOscuro = new THREE.MeshStandardMaterial({ color: 0x2b2f36, metalness: 0.5, roughness: 0.5 });
+const matOjo    = new THREE.MeshStandardMaterial({ color: 0x00e5ff, emissive: 0x00e5ff, emissiveIntensity: 1.5 });
+const matLuz    = new THREE.MeshStandardMaterial({ color: 0xff4444, emissive: 0xff2222, emissiveIntensity: 1.2 });
+
+// Crea una pieza con sombras y la agrega al padre
+function pieza(geometria, material, padre, x = 0, y = 0, z = 0) {
+  const m = new THREE.Mesh(geometria, material);
+  m.position.set(x, y, z);
+  m.castShadow = true;
+  m.receiveShadow = true;
+  padre.add(m);
+  return m;
+}
+// Caja con bordes redondeados (aproximada con caja simple + esferas no es necesario)
+const caja = (a, b, c) => new THREE.BoxGeometry(a, b, c);
+
+// ---------- Robot (jerarquía de articulaciones) ----------
+const robot = new THREE.Group();
+escena.add(robot);
+
+// Cadera: punto de unión de piernas y torso
+const cadera = new THREE.Group();
+cadera.position.y = 1.6;
+robot.add(cadera);
+pieza(caja(1.1, 0.3, 0.6), matMetal, cadera);
+
+// Torso
+const torso = new THREE.Group();
+torso.position.y = 0.15;
+cadera.add(torso);
+pieza(caja(1.4, 1.5, 0.8), matCuerpo, torso, 0, 0.8, 0);
+// Panel del pecho
+pieza(caja(0.8, 0.6, 0.05), matOscuro, torso, 0, 0.95, 0.42);
+const luzPecho = pieza(new THREE.SphereGeometry(0.08, 16, 16), matLuz, torso, 0.25, 1.1, 0.46);
+for (let i = 0; i < 3; i++) {
+  pieza(caja(0.35, 0.05, 0.03), matOjo, torso, -0.12, 0.8 + i * 0.12, 0.46);
+}
+
+// Cuello y cabeza
+const cuello = new THREE.Group();
+cuello.position.y = 1.55;
+torso.add(cuello);
+pieza(new THREE.CylinderGeometry(0.15, 0.2, 0.2, 16), matMetal, cuello, 0, 0.1, 0);
+
+const cabeza = new THREE.Group();
+cabeza.position.y = 0.2;
+cuello.add(cabeza);
+pieza(caja(0.9, 0.7, 0.75), matCuerpo, cabeza, 0, 0.35, 0);
+// Visor y ojos
+pieza(caja(0.7, 0.25, 0.05), matOscuro, cabeza, 0, 0.42, 0.38);
+const ojoIzq = pieza(new THREE.SphereGeometry(0.07, 16, 16), matOjo, cabeza, -0.17, 0.42, 0.41);
+const ojoDer = pieza(new THREE.SphereGeometry(0.07, 16, 16), matOjo, cabeza,  0.17, 0.42, 0.41);
+// Boca
+pieza(caja(0.3, 0.04, 0.03), matOscuro, cabeza, 0, 0.16, 0.39);
+// Orejas
+pieza(new THREE.CylinderGeometry(0.12, 0.12, 0.1, 16), matMetal, cabeza, -0.5, 0.35, 0).rotation.z = Math.PI / 2;
+pieza(new THREE.CylinderGeometry(0.12, 0.12, 0.1, 16), matMetal, cabeza,  0.5, 0.35, 0).rotation.z = Math.PI / 2;
+// Antena
+pieza(new THREE.CylinderGeometry(0.025, 0.025, 0.4, 8), matMetal, cabeza, 0, 0.9, 0);
+const puntaAntena = pieza(new THREE.SphereGeometry(0.08, 16, 16), matLuz, cabeza, 0, 1.12, 0);
+
+// Brazo: hombro -> brazo superior -> codo -> antebrazo -> mano
+function crearBrazo(lado) {
+  const hombro = new THREE.Group();
+  hombro.position.set(lado * 0.85, 1.4, 0);
+  torso.add(hombro);
+  pieza(new THREE.SphereGeometry(0.2, 20, 20), matMetal, hombro);
+  pieza(caja(0.28, 0.6, 0.28), matCuerpo, hombro, 0, -0.4, 0);
+
+  const codo = new THREE.Group();
+  codo.position.y = -0.75;
+  hombro.add(codo);
+  pieza(new THREE.SphereGeometry(0.15, 20, 20), matMetal, codo);
+  pieza(caja(0.24, 0.55, 0.24), matCuerpo, codo, 0, -0.35, 0);
+
+  // Pinza
+  const mano = new THREE.Group();
+  mano.position.y = -0.7;
+  codo.add(mano);
+  pieza(caja(0.3, 0.1, 0.2), matOscuro, mano);
+  pieza(caja(0.06, 0.2, 0.15), matMetal, mano, -0.11, -0.13, 0);
+  pieza(caja(0.06, 0.2, 0.15), matMetal, mano,  0.11, -0.13, 0);
+  return { hombro, codo };
+}
+const brazoIzq = crearBrazo(-1);
+const brazoDer = crearBrazo(1);
+
+// Pierna: cadera -> muslo -> rodilla -> espinilla -> pie
+function crearPierna(lado) {
+  const articulacion = new THREE.Group();
+  articulacion.position.set(lado * 0.32, -0.1, 0);
+  cadera.add(articulacion);
+  pieza(caja(0.34, 0.6, 0.34), matMetal, articulacion, 0, -0.3, 0);
+
+  const rodilla = new THREE.Group();
+  rodilla.position.y = -0.65;
+  articulacion.add(rodilla);
+  pieza(new THREE.SphereGeometry(0.17, 20, 20), matOscuro, rodilla);
+  pieza(caja(0.32, 0.6, 0.32), matCuerpo, rodilla, 0, -0.35, 0);
+  pieza(caja(0.42, 0.18, 0.62), matOscuro, rodilla, 0, -0.68, 0.1);
+  return { articulacion, rodilla };
+}
+const piernaIzq = crearPierna(-1);
+const piernaDer = crearPierna(1);
+
+// ---------- Controles de la interfaz ----------
+const rad = THREE.MathUtils.degToRad;
+const valores = { cabeza: 0, brazoIzq: 0, brazoDer: 0, codos: 0, cuerpo: 0 };
+for (const id of Object.keys(valores)) {
+  const input = document.getElementById(id);
+  const etiqueta = document.getElementById('v-' + id);
+  input.addEventListener('input', () => {
+    valores[id] = Number(input.value);
+    etiqueta.textContent = input.value + '°';
+  });
+}
+
+let animacion = 'ninguna';
+document.querySelectorAll('[data-anim]').forEach(boton => {
+  boton.addEventListener('click', () => {
+    animacion = boton.dataset.anim;
+    document.querySelectorAll('[data-anim]').forEach(b => b.classList.toggle('activo', b === boton));
+  });
+});
+
+document.querySelectorAll('[data-color]').forEach(boton => {
+  boton.addEventListener('click', () => matCuerpo.color.set(boton.dataset.color));
+});
+
+// ---------- Ajuste de tamaño ----------
+function ajustarTamano() {
+  const { clientWidth: w, clientHeight: h } = contenedor;
+  renderizador.setSize(w, h, false);
+  camara.aspect = w / h;
+  camara.updateProjectionMatrix();
+}
+new ResizeObserver(ajustarTamano).observe(contenedor);
+ajustarTamano();
+
+// ---------- Bucle de animación ----------
+const reloj = new THREE.Clock();
+function animar() {
+  requestAnimationFrame(animar);
+  const t = reloj.getElapsedTime();
+
+  // Pose base desde los deslizadores
+  let cabezaY = rad(valores.cabeza);
+  let hombroIzq = rad(valores.brazoIzq), hombroDer = rad(valores.brazoDer);
+  let hombroIzqZ = 0, hombroDerZ = 0;
+  let codoIzq = -rad(valores.codos), codoDer = -rad(valores.codos);
+  let piernaI = 0, piernaD = 0, rodillaI = 0, rodillaD = 0;
+  let alturaCadera = 1.6, giroTorso = 0;
+
+  if (animacion === 'caminar') {
+    const f = t * 4;
+    piernaI = Math.sin(f) * 0.5;
+    piernaD = -Math.sin(f) * 0.5;
+    rodillaI = Math.max(0, -Math.sin(f)) * 0.8;
+    rodillaD = Math.max(0, Math.sin(f)) * 0.8;
+    hombroIzq += -Math.sin(f) * 0.5;
+    hombroDer += Math.sin(f) * 0.5;
+    codoIzq -= 0.3; codoDer -= 0.3;
+    alturaCadera += Math.abs(Math.cos(f)) * 0.06;
+    giroTorso = Math.sin(f) * 0.08;
+  } else if (animacion === 'saludar') {
+    hombroDer = Math.PI;
+    hombroDerZ = 0;
+    codoDer = -0.4 + Math.sin(t * 8) * 0.4;
+    brazoDer.hombro.rotation.y = 0;
+    cabezaY += Math.sin(t * 2) * 0.2;
+  } else if (animacion === 'bailar') {
+    const f = t * 5;
+    hombroIzqZ = -1.2 + Math.sin(f) * 0.6;
+    hombroDerZ = 1.2 + Math.sin(f) * 0.6;
+    codoIzq = -1 + Math.cos(f) * 0.4;
+    codoDer = -1 - Math.cos(f) * 0.4;
+    giroTorso = Math.sin(f / 2) * 0.4;
+    cabezaY += Math.sin(f) * 0.3;
+    alturaCadera += Math.abs(Math.sin(f)) * 0.15 - 0.08;
+    rodillaI = rodillaD = 0.15 + Math.abs(Math.sin(f)) * 0.2;
+    piernaI = piernaD = -rodillaI / 2;
+  }
+
+  // Aplicar pose
+  robot.rotation.y = rad(valores.cuerpo);
+  cadera.position.y = alturaCadera;
+  torso.rotation.y = giroTorso;
+  cabeza.rotation.y = cabezaY;
+  brazoIzq.hombro.rotation.x = -hombroIzq;
+  brazoDer.hombro.rotation.x = -hombroDer;
+  brazoIzq.hombro.rotation.z = hombroIzqZ;
+  brazoDer.hombro.rotation.z = hombroDerZ;
+  brazoIzq.codo.rotation.x = codoIzq;
+  brazoDer.codo.rotation.x = codoDer;
+  piernaIzq.articulacion.rotation.x = piernaI;
+  piernaDer.articulacion.rotation.x = piernaD;
+  piernaIzq.rodilla.rotation.x = rodillaI;
+  piernaDer.rodilla.rotation.x = rodillaD;
+
+  // Detalles vivos: parpadeo y luces
+  const parpadeo = (t % 4) < 0.12 ? 0.1 : 1;
+  ojoIzq.scale.y = ojoDer.scale.y = parpadeo;
+  matLuz.emissiveIntensity = 0.6 + Math.abs(Math.sin(t * 3)) * 1.2;
+  puntaAntena.position.y = 1.12 + Math.sin(t * 3) * 0.02;
+  luzPecho.scale.setScalar(0.9 + Math.abs(Math.sin(t * 3)) * 0.2);
+
+  controles.update();
+  renderizador.render(escena, camara);
+}
+animar();
+</script>
+</body>
+</html>
